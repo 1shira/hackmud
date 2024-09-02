@@ -11,6 +11,9 @@ needs a \`Ndb\` to work on passed
 to see what db script should look like pass dbexample:true
 to see what this script supports pass showsupported:true
 to see syntax for a command use syntax:<command>
+
+source : https://github.com/1shira/hackmud/blob/main/shira.sql.js
+you can make improvements there if you want, open a pr
 `
     if(args.dbexample)
         return `db script like:
