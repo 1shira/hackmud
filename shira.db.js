@@ -1,7 +1,11 @@
 function (context,args) {
+    // This is an example of a script that could be used with shira.sql
+    // rememer to add authorization to a script like this to avoid giving
+    // everyone access to your database
     let wl = $db.f({s:"WHITELIST",u:context.caller}).first()
     let ws = $db.f({s:"SCRIPTS_WHITELIST",u:context.calling_script}).first()
     if(!wl && !ws) return {ok:!1,msg:"`X403`"}
+    
     let f = (q, p) => {
         q = JSON.parse(JSON.stringify(q || {}))
         p = p && JSON.parse(JSON.stringify(p))
