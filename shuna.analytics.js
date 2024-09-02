@@ -36,6 +36,8 @@ function(context,args){
         $db.us(query,{"$set":stat})
         return  
     }
+    // I will add an option for users to see their own usage of my products eventually
+    // but the actual statistics are private for now
     let onWhitelist = $db.f({ u: context.caller, s: 'WHITELIST' }).first()
     if(!onWhitelist) return "`Dunauthorized`"
     var lengths = [86400,3600,60,1],
