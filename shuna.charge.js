@@ -23,6 +23,7 @@ you can specify an account the gc goes to with to:"<account name>" (default scri
 you can let your users use a account of their choosing by asking them for an account and passing account:"<account name>" (default caller)
 
 to see this scripts source code use quine:true
+you can also view it at https://github.com/1shira/hackmud/blob/main/shuna.charge.js
 
     `
     if(args.quine) return $fs.scripts.quine()
