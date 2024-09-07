@@ -588,7 +588,7 @@ return {f,i,r,u}}`
             data.map(el =>  Object.entries(el).forEach(([key,val]) => {if(typeof val === "object"){
                 el[key] = JSON.stringify(val)
             }}))    
-            return "\n" + uilib.table(data,Object.keys(data[0]),Object.keys(data[0]))
+            return "\n" + uilib.table(data,Object.keys(data[0]).map(el => {return{key:el,header:el}}))
         }
     }
     if(sql.startsWith("UPDATE")){ return error(Error,"`Xnot yet implemented`")}
