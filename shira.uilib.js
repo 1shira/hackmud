@@ -244,7 +244,27 @@ function (context, args) {
             return warn + header_string + row_strings.join("\n")
         },
         analyze_npc = (loc) => {/* -- ommited -- */},
-        locTable = (locs,agressivePlayerLabeling=false,useTable=false,headers=false) => {/* -- ommited -- */}
+        locTable = (locs,agressivePlayerLabeling=false,useTable=false,headers=false) => {
+            let diffs = ["jr","dd","wb","pr","ls"]
+            let order = ["`Xplayer`","`xunknown`","`Mturtle`","`Kstag`","`Craven`","`Oweaver`","`Bwolf`"]   
+            let rows = []
+            
+            locs = locs.sort()
+            locs.forEach((loc) => rows.push(analyze_npc(loc)))
+            
+            rows.sort((a, b) => (a.diff || 0) - (b.diff || 0))
+            rows.sort((a,b) => order.indexOf(a.type) - order.indexOf(b.type))
+            if(agressivePlayerLabeling) rows.forEach((el) => {if(el.type === "`xunknown`"){el.type = "`Xplayer`"}})
+            
+            rows.forEach((el) => {
+                if(el.diff !== undefined) el.diff = "`" + "2JFDT"[el.diff] + diffs[el.diff] + "`"
+                else el.diff = "  "
+            })
+            
+            if(useTable)
+                return table(rows,[{key:"loc",header:headers ? "loc" : null},{key:"diff",header:headers ? "diff" : null},{key:"type",header:headers ? "class" : null}])
+            return (headers ? (center("loc",44) + "diff class") : "") + rows.map(el => ljust(el.loc,45) + " " + el.diff + " " + el.type).join("\n")
+        }
   if(!context.calling_script) return "`Ythis is a ui library used by shira products`\nsee\nhttps://github.com/1shira/hackmud/blob/main/shira.uilib.js"
     return {rjust,ljust,center,side_by_side,len_wo_colors,count,table,analyze_npc,locTable}
 }
