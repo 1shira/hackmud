@@ -261,8 +261,9 @@ function (context, args) {
                 else el.diff = "  "
             })
             
-            if(useTable)
+            if(useTable) // will split to new lines if your client width is small
                 return table(rows,[{key:"loc",header:headers ? "loc" : null},{key:"diff",header:headers ? "diff" : null},{key:"type",header:headers ? "class" : null}])
+            // will only split if loc doesn#t fit on screen, but may cause linewrap resulting in wierd looking lists
             return (headers ? (center("loc",44) + "diff class") : "") + rows.map(el => ljust(el.loc,45) + " " + el.diff + " " + el.type).join("\n")
         }
   if(!context.calling_script) return "`Ythis is a ui library used by shira products`\nsee\nhttps://github.com/1shira/hackmud/blob/main/shira.uilib.js"
