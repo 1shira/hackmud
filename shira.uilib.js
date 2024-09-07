@@ -249,18 +249,22 @@ function (context, args) {
             let order = ["`Xplayer`","`xunknown`","`Mturtle`","`Kstag`","`Craven`","`Oweaver`","`Bwolf`"]   
             let rows = []
             
+            //analyze locs
             locs = locs.sort()
             locs.forEach((loc) => rows.push(analyze_npc(loc)))
             
+            // sort
             rows.sort((a, b) => (a.diff || 0) - (b.diff || 0))
             rows.sort((a,b) => order.indexOf(a.type) - order.indexOf(b.type))
+            // label unknown as player if wished so
             if(agressivePlayerLabeling) rows.forEach((el) => {if(el.type === "`xunknown`"){el.type = "`Xplayer`"}})
             
+            // map number to diff string
             rows.forEach((el) => {
                 if(el.diff !== undefined) el.diff = "`" + "2JFDT"[el.diff] + diffs[el.diff] + "`"
                 else el.diff = "  "
             })
-            
+
             if(useTable) // will split to new lines if your client width is small
                 return table(rows,[{key:"loc",header:headers ? "loc" : null},{key:"diff",header:headers ? "diff" : null},{key:"type",header:headers ? "class" : null}])
             // will only split if loc doesn#t fit on screen, but may cause linewrap resulting in wierd looking lists
