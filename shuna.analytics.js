@@ -36,10 +36,6 @@ function(context,args){
         $db.us(query,{"$set":stat})
         return  
     }
-    // I will add an option for users to see their own usage of my products eventually
-    // but the actual statistics are private for now
-    let onWhitelist = $db.f({ u: context.caller, s: 'WHITELIST' }).first()
-    if(!onWhitelist) return "`Dunauthorized`"
     var lengths = [86400,3600,60,1],
     dhms = ["d","h","m","s"],
     parseTime = (timeString) => {
@@ -68,6 +64,12 @@ function(context,args){
         if(args.user) query.user = args.user
         if(args.ref) query.ref = args.ref
         if(args.time) query.last = {$gte:lib.get_date_utcsecs() - (parseTime(args.time) * 1000 || 2592000000)} // 30d standard
+    }
+    // allow me to view all stats
+    // allow non-whitelist users to view their own stats only
+    let onWhitelist = $db.f({ u: context.caller, s: 'WHITELIST' }).first()
+    if(!onWhitelist) {
+        query.user = context.caller;
     }
 
     // get stats
