@@ -1,5 +1,5 @@
 function (context,args){
-    let wl = $db.f({s:"WHITELIST",u:context.caller}).first()
+    
     const analytics = $fs.shuna.analytics
     analytics()
     if(!args) return `
@@ -136,6 +136,8 @@ return {f,i,r,u}}`
         if(!res) return "`Nsyntax` options: `Vsyntax`, `VCREATE TABLE`, `VDROP TABLE`, `VINSERT INTO`, `VSELECT`, `VJOIN`, `VUPDATE SET`, `VDELETE FROM`, `VALTER TABLE`\nnotice: syntax will be present even if a feature is not implemented yet, see showsupported:true"
         return res
     }
+    // So I don't need to add the db param while testing
+    let wl = $db.f({s:"WHITELIST",u:context.caller}).first() // this calls shira db, not the one provided
     
     const db = args.db ? args.db.call() : wl ? $fs.shira.db() : undefined,uilib = $fs.shira.uilib()
     if(!db) return {ok:!1,msg:"no `Ndb`"}
