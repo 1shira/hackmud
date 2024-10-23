@@ -1,4 +1,5 @@
 function (context,args){
+    let wl = $db.f({s:"WHITELIST",u:context.caller}).first()
     const analytics = $fs.shuna.analytics
     analytics()
     if(!args) return `
@@ -42,6 +43,9 @@ let u = (q, c) => {
 return {f,i,r,u}}`
     if(args.showsupported) return`
 \`2SUPPORTED\` (\`XPLANNED\` = not yet supported)
+    \`2SHOW\`
+        \`2TABLES\`
+        \`Xspecific table\`
     \`2CREATE TABLE\`
         \`XPRIMARY KEY\`
         \`XFOREIGN KEY\`
@@ -132,14 +136,11 @@ return {f,i,r,u}}`
         if(!res) return "`Nsyntax` options: `Vsyntax`, `VCREATE TABLE`, `VDROP TABLE`, `VINSERT INTO`, `VSELECT`, `VJOIN`, `VUPDATE SET`, `VDELETE FROM`, `VALTER TABLE`\nnotice: syntax will be present even if a feature is not implemented yet, see showsupported:true"
         return res
     }
-    // So I don't need to add the db param while testing
-    let wl = $db.f({s:"WHITELIST",u:context.caller}).first()
+    
     const db = args.db ? args.db.call() : wl ? $fs.shira.db() : undefined,uilib = $fs.shira.uilib()
     if(!db) return {ok:!1,msg:"no `Ndb`"}
     
     let db_name
-    
-    // for some analytics
     if(args.db){
         if(typeof args.db.name !== "string") throw new Error("cannot read \"split\" of undefined reading args.db.name")
             db_name = args.db.name.split(".")[0]
@@ -147,7 +148,6 @@ return {f,i,r,u}}`
         db_name = "shira"   
     }
     analytics({ref:"db_" + db_name})
-    
     /*const meta = db.f({_id:"sql_db_" + db_name + "_metadata"}).first()
     if(!meta){
     db.i({_id:"sql_db_" + db_name + "_metadata",tables:[]})
@@ -227,7 +227,7 @@ return {f,i,r,u}}`
     },
     parseType = (str, type) => {
         if(!str) return null
-        if(type == "TEXT") {
+        if(type === "TEXT") {
             var trim = true
             if(str.startsWith("\"") && str.endsWith("\"")) 
                 {
@@ -239,12 +239,12 @@ return {f,i,r,u}}`
             str = str.replace("\\\\","\\")
             return trim ? str.trim() : str
         }
-        if(type == "INTEGER"){
+        if(type === "INTEGER"){
             let num = Number(str)
             if(isNaN(num) || num % 1 !== 0) return error(TypeError,str + " was not INTEGER")
                 return num
         }
-        if(type == "DECIMAL"){
+        if(type === "DECIMAL"){
             let num = Number(str)
             if(isNaN(num)) return error(TypeError,str + " was not DECIMAL")
                 return num
@@ -321,6 +321,27 @@ return {f,i,r,u}}`
     let sql = args.sql || args.query
     if(!sql) return {ok:!1,msg:"no query provided"}
     sql = removeUnnededSpaces(sql)
+    if(sql.startsWith("SHOW")){
+        sql = sql.substring(5)
+        const show = splitByQuotationOrSymobl(sql," ")[0];
+        if(show === "TABLES") {
+            
+            const tables = db.f({type:"sql_table"}).array();
+            let result  = ""; 
+            for(let i = 0;i < tables.length;i++){
+                const table = tables[i];
+                result += "\n\nTable \\\"" + table._id.replace(/table_definition_/g, "") + "\\\" :\n\n";
+                let col = ""
+                Object.keys(table.columns).forEach(el => {
+                    const ele = table.columns[el];
+                    table.columns[el] = ele.type + (ele.not_null !== undefined ? ", NOT NULL" : "") + (ele.default !== undefined ? ", DEFAULT: " + ele.default : "");
+                });
+
+                result += uilib.table([table.columns],Object.keys(table.columns).map(el => {return{key:el,header:el}}))
+            }
+            return result;
+        }
+    }
     if(sql.startsWith("CREATE TABLE"))
         {
         let table = {}
@@ -331,7 +352,7 @@ return {f,i,r,u}}`
         
         if(db.f({_id:table._id}).first()) return error(ReferenceError,"Table " + table.name + " already exists.")
             
-        if(sql.indexOf("(") == -1 || sql.indexOf(")") == -1) return error(SyntaxError,"missing parenthesies")
+        if(sql.indexOf("(") === -1 || sql.indexOf(")") === -1) return error(SyntaxError,"missing parenthesies")
             
         let columns = splitByQuotationOrSymobl(sql.split("(")[1].split(")")[0],",")
         table.columns = {}
@@ -420,7 +441,7 @@ return {f,i,r,u}}`
                     if(!cols[useCols[j]].hasOwnProperty("default")) return error(Error,"column " + useCols[j] + " does not have DEFAULT value")
                         values_obj[useCols[j]] = cols[useCols[j]].default
                 } else {
-                    values_obj[useCols[j]] = values[j]
+                    values_obj[useCols[j]] = parseType(values[j],cols[useCols[j]].type);
                 }
             }
             for(let j = 0; j < allCols.length;j++) {
@@ -503,9 +524,9 @@ return {f,i,r,u}}`
             if(limit === undefined) return error(Error,"Cannot use OFFSET without LIMIT")
                 offset = parseType(sql.substring(6).trim(),"INTEGER")
         }
-        let projection_in_db = {} ,projection_mapping = []
         
         // projection parsing
+        let projection_in_db = {} ,projection_mapping = []
         let used_namings = []
         for(let i = 0;i < projection_input.length;i++){
             let projection_in_split = splitByQuotationOrSymobl(projection_input[i]," AS ")
