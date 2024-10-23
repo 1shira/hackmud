@@ -1,6 +1,6 @@
 function (context,args) {
     // This is an example of a script that could be used with shira.sql
-    // rememer to add authorization to a script like this to avoid giving
+    // remember to add authorization to a script like this to avoid giving
     // everyone access to your database
     let wl = $db.f({s:"WHITELIST",u:context.caller}).first()
     let ws = $db.f({s:"SCRIPTS_WHITELIST",u:context.calling_script}).first()
