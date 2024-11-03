@@ -10,25 +10,30 @@ function(context,args) { // authorize:"scripts.user", amount:"1MGC", duration:"3
 \`Yby becoming a shuna.bank partner, you can get an even lower fee\`
 \`Yto do this, contact shuna (or shira)\`
 
+\`Nview\`
+\`Vsource\`  https://github.com/1shira/hackmud/blob/main/shuna.charge.js
+\`setup\`
+\`Vusage\`
+
+    `
+    if(args.view === "source") return $fs.scripts.quine()
+    if(args.view === "setup") return "If you don't have a shuna.bank account yet, create one with shuna.bank { register:true }\n\nrun shuna.charge { authorize:\"<script>\",amount:\"<maximum_charge>\" } to allow scripts\n\nIf you don't have enought GC in your account, once a script actually charges you, the charge will not go through\n\nscripts can allow you to choose an account to use, refer to the script you're using for wich args to use, there is no guarantee all scripts support this feature"
+    if(args.view === "usage") return `
 to authorize a script use authorize:"<script>", amount:<gc string or num>
 you can specify authorization duration with duration:<time string> (default 30d if ommited)
 you can specify an account with account:"<account name>" (default caller)
 you can add once:true to only authorize the script for one run  
 
-to use the script in your script add these lines:
+to use this script in your script to charge add these lines:
 var res = #fs.shuna.charge({amount:"<gc string or num>"})
 if(!res.ok) return res
 
 you can specify an account the gc goes to with to:"<account name>" (default script creator)
 you can let your users use a account of their choosing by asking them for an account and passing account:"<account name>" (default caller)
-
-to see this scripts source code use quine:true
-you can also view it at https://github.com/1shira/hackmud/blob/main/shuna.charge.js
-
+it is recommended to call this argumen \`Nbankaccount\`
     `
-    if(args.quine) return $fs.scripts.quine()
-        var READ = (s) => #db.f(s),
-    UPDATE = (s,n) => #db.u(s,{"$set":n}),
+    var READ = (s) => $db.f(s),
+    UPDATE = (s,n) => $db.u(s,{"$set":n}),
     // time string parsing
     lengths = [86400000,3600000,60000,1000],
     dhms = ["d","h","m","s"],
