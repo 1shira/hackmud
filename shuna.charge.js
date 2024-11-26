@@ -63,7 +63,8 @@ it is recommended to call this argumen \`Nbankaccount\`
     auth = () => context.caller == account.u ? true : account.a.includes(context.caller),
     authu = (u) => u == account.u ? true : account.a.includes(u),
     auth_script = () => {
-        let tokens = account.tokens 
+        let tokens = account.tokens
+        if(!account.tokens) account.tokens = []
         // remove expired tokens
         tokens = tokens.filter((token) => (token.date + token.duration) > lib.get_date_utcsecs())
         // remove tokens added by users that are no longer authorized
@@ -79,7 +80,7 @@ it is recommended to call this argumen \`Nbankaccount\`
             return {ok:!1,msg:"internal error, contact shuna"}
             
             // if one-time token, authorize once and remove token
-            if(authorized && authorized[0].once){
+            if(authorized && authorized.length > 0 && authorized[0].once){
                 tokens = tokens.filter((el) => el.calling_script === context.calling_script && el.amount === args.amount && !el.once)
                 UPDATE({s:"bank",u:account.u},{tokens:account.tokens})
                 
@@ -121,6 +122,8 @@ it is recommended to call this argumen \`Nbankaccount\`
             // for showing stats cause I didn't want to have a million db calls in here
             $fs.shuna.analytics({context,amt:args.amount})
             // transaction  
+            if(recieving_account.u === account.u) return {ok:!0}
+            
             account.b -= args.amount
             recieving_account.b += args.amount - fee
             
