@@ -243,7 +243,16 @@ function (context, args) {
             if(warn) warn += "\nif you do not own this script, contact script owner\nbackwards compatability will not always be supported"
             return warn + header_string + row_strings.join("\n")
         },
-        analyze_npc = (loc) => {/* -- ommited -- */},
+        analyze_npc = (loc) => {
+            // returns object like
+            // {
+            // loc: <loc>
+            // type: <class> ("wolf","weaver","raven","stag","turtle","unknown","player") // unknown is most likely players
+            // diff: <difficulty> (null,"jr","dd","wb","pr","ls")
+            // }
+            // algorithm proprietary
+            /* -- ommited -- */
+        },
         locTable = (locs,agressivePlayerLabeling=false,useTable=false,headers=false) => {
             let diffs = ["jr","dd","wb","pr","ls"]
             let order = ["`Xplayer`","`xunknown`","`Mturtle`","`Kstag`","`Craven`","`Oweaver`","`Bwolf`"]   
