@@ -11,15 +11,17 @@ function charge(context, args) {
 
 \`YThis is a script meant to be a lower-fee replacement to escrow.charge\`
 \`Yit works by transfering money in shuna.bank between bank accounts.\`
+\`Yit allows scripts to take up to the authorized amount per call\`
 
 \`Yanyone can use this script in their's, the standard fee is \`\`22%\`\`u (0.5% less than escrow)\`
 \`Yby becoming a shuna.bank partner, you can get an even lower fee\`
 \`Yto do this, contact shuna (or shira)\`
 
 \`Nview\`
-\`Vsource\`  https://github.com/1shira/hackmud/blob/main/shuna.charge.js
-\`setup\`
+\`Vsource\`  \`0https:\`\`0//github\`\`0.com/1shira/hackmud/blob/main/shuna.\`\`0charge\`\`0.js\`
+\`Vsetup\`
 \`Vusage\`
+\`Vtokens\`
 
     `;
   if (args.view === 'source') return $fs.scripts.quine();
@@ -27,19 +29,25 @@ function charge(context, args) {
     return 'If you don\'t have a shuna.bank account yet, create one with shuna.bank { register:true }\n\nrun shuna.charge { authorize:"<script>",amount:"<maximum_charge>" } to allow scripts\n\nIf you don\'t have enought GC in your account, once a script actually charges you, the charge will not go through\n\nscripts can allow you to choose an account to use, refer to the script you\'re using for wich args to use, there is no guarantee all scripts support this feature';
   if (args.view === 'usage')
     return `
+\`Yas a user\`
+
 to authorize a script use authorize:"<script>", amount:<gc string or num>
 you can specify authorization duration with duration:<time string> (default 30d if ommited)
 you can specify an account with account:"<account name>" (default caller)
-you can add once:true to only authorize the script for one run  
+you can add once:true to only authorize the script for one run (default false)
+
+\`Yas a script creator\`
 
 to use this script in your script to charge add these lines:
-var res = #fs.shuna.charge({amount:"<gc string or num>"})
+var res = #fs.shuna.charge ({amount:"<gc string or num>"})
 if(!res.ok) return res
 
 you can specify an account the gc goes to with to:"<account name>" (default script creator)
+fees are calculated based on the script creators account.
 you can let your users use a account of their choosing by asking them for an account and passing account:"<account name>" (default caller)
-it is recommended to call this argumen \`Nbankaccount\`
+it is recommended to call this argument \`Nbankaccount\` in your script
     `;
+
   var READ = (s) => $db.f(s),
     UPDATE = (s, n) => $db.u(s, { $set: n }),
     // time string parsing
@@ -85,7 +93,7 @@ it is recommended to call this argumen \`Nbankaccount\`
       tokens = tokens.filter((token) => authu(token.by));
       // push to db if tokens got removed
       if (tokens !== account.tokens)
-        UPDATE({ s: 'bank', u: account.u }, { tokens: account.tokens });
+        UPDATE({ s: 'bank', u: account.u }, { tokens });
 
       //check if script is alloed to take amount
       // @ts-ignore
@@ -125,7 +133,7 @@ it is recommended to call this argumen \`Nbankaccount\`
       if (fees.percent) total += Math.floor((fees.percent / 100) * amount);
       return total;
     };
-  // let a script charge a fee
+  // a script charging
   if (context.calling_script) {
     if (!args.amount)
       return {
@@ -135,13 +143,12 @@ it is recommended to call this argumen \`Nbankaccount\`
     if (typeof args.amount !== 'number')
       args.amount = lib.to_gc_num(args.amount);
     // check if account exists
-    if (!account)
-      return { ok: !1, msg: 'shuna.charge: shuna.bank account does not exist' };
+    if (!account) return { ok: !1, msg: 'shuna.charge: `Dunauthorized`' };
     // check auth
     if (!auth())
       return {
         ok: !1,
-        msg: 'shuna.charge: no authorization for the account charged',
+        msg: 'shuna.charge: `Dunauthorized`',
       };
     if (!auth_script())
       return {
@@ -205,6 +212,49 @@ it is recommended to call this argumen \`Nbankaccount\`
 
     return { ok: !0 };
   }
+  // user viewing their tokens
+  if (args.view === 'tokens') {
+    if (!account) return { ok: !1, msg: 'shuna.charge: `Dunauthorized`' };
+    // check auth
+    if (!auth())
+      return {
+        ok: !1,
+        msg: '`Dunauthorized`',
+      };
+    // make sure account.tokens exists to avoid issues
+    if (!account.tokens) account.tokens = [];
+    // check token expiry
+    let active = account.tokens.filter(
+      (token) => token.date + token.duration > lib.get_date_utcsecs()
+    );
+    if (active !== account.tokens)
+      UPDATE({ s: 'bank', u: account.u }, { tokens: active });
+
+    if (account.tokens.length < 1)
+      return '`Ythere are currently no scripts authorized`';
+
+    // if there are activee tokens, format them nicely and show them
+    const uilib = $fs.shira.uilib();
+    const tokens = account.tokens.map((el) => {
+      let token = {};
+      token.script = uilib.center(el.script, 5, ' ');
+      token.by = uilib.center(el.by, 8, ' ');
+      token.amount = uilib.center(lib.to_gc_str(el.amount), 6, ' ');
+      token.expires = lib.to_game_timestr(new Date(el.date + el.duration));
+      return token;
+    });
+    const columns = [
+      { key: 'script', header: '`Yscript`' },
+      { key: 'by', header: '`Yadded by`' },
+      { key: 'amount', header: '`Yamount`' },
+      { key: 'expires', header: '`Yexpires`' },
+    ];
+    return (
+      '\n' +
+      uilib.table(tokens, columns) +
+      "\n\n`YYou can effectively remove a token by setting it's duration to 1s or amount to 0, every script can only have one token`"
+    );
+  }
   // let a user authorize a script to charge them
   if (args.authorize) {
     // security checks
@@ -240,7 +290,7 @@ it is recommended to call this argumen \`Nbankaccount\`
     // remove tokens that grant the same script the same amount
     // @ts-ignore
     account.tokens = account.tokens.filter(
-      (el) => el.script !== args.authorize && el.amount > args.amount
+      (el) => el.script !== args.authorize
     );
     // add new token
     // @ts-ignore
