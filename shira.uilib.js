@@ -78,7 +78,7 @@ function (context, args) {
                     let ll = 0  
                     for (let l = 0; l < lines[k].length && remaining_input.length > 0; l++) {
                         let char = lines[k][l]
-                        let next_sign = remaining_input.substring(1).search(/[ .,_+-]/g)
+                        let next_sign = remaining_input.substring(1).search(/[ \.,_\+-]/g)
                         let netx_opportunity = next_sign === -1 ? remaining_input.length : next_sign + 2
                         if (char === "`" && count(remaining_input, "`") > 1) {
                             in_color_code = !in_color_code
@@ -89,7 +89,7 @@ function (context, args) {
                             after_color_code = false
                             line_in_output += char
                             remaining_input = remaining_input.substring(1)
-                        } else if (in_color_code && /[ .,_+-]/.test(char) && ll + netx_opportunity > width) {
+                        } else if (in_color_code && /[ \.,_\+-]/.test(char) && ll + netx_opportunity > width) {
                             if (remaining_input[l + 1] === "`") {
                                 line_in_output += char + "`"
                                 remaining_input = remaining_input.substring(2)  
@@ -105,7 +105,7 @@ function (context, args) {
                                 line_in_output = "`" + line_in_output[line_in_output.substring(0,line_in_output.length-1).lastIndexOf("`")+1]
                                 ll = 0
                             }
-                        } else if (!in_color_code && /[ .,_+-]/.test(char) && ll + netx_opportunity > width) {
+                        } else if (!in_color_code && /[ \.,_\+-]/.test(char) && ll + netx_opportunity > width) {
                             line_in_output += char
                             remaining_input = remaining_input.substring(1)
                             lines_output.push(line_in_output)
@@ -117,14 +117,14 @@ function (context, args) {
                             remaining_input = ""
                             line_in_output = ""
                             ll = 0
-                        } else if (in_color_code && ll >= width - 2) {
+                        } else if (in_color_code && ll >= width - 1) {
                             line_in_output += char
                             line_in_output += "`"
                             remaining_input = remaining_input.substring(1)
                             lines_output.push(line_in_output)   
                             line_in_output = "`" + line_in_output[line_in_output.substring(0,line_in_output.length-1).lastIndexOf("`")+1]
                             ll = 0
-                        } else if (ll >= width - 2) {
+                        } else if (ll >= width - 1) {
                             line_in_output += char
                             remaining_input = remaining_input.substring(1)
                             lines_output.push(line_in_output)
@@ -154,7 +154,7 @@ function (context, args) {
             }
             
             // calculate width
-            let fullWidth = context.cols - ((column_names.length - 1) * seperator.length)
+            let fullWidth = context.cols - column_names.length * seperator.length;
             let widths = {}
             let extra = fullWidth % column_names.length
             // set for every col
