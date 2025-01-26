@@ -280,5 +280,5 @@ function (context, args) {
             return (headers ? (center("loc",44) + "diff class") : "") + rows.map(el => ljust(el.loc,45) + " " + el.diff + " " + el.type).join("\n")
         }
   if(!context.calling_script) return "`Ythis is a ui library used by shira products`\nsee\nhttps://github.com/1shira/hackmud/blob/main/shira.uilib.js"
-    return {rjust,ljust,center,side_by_side,len_wo_colors,count,table,analyze_npc,locTable}
+    return {rjust,ljust,center,side_by_side,len_wo_colors,count,table,analyze_npc,locTable,tableLineSplit}
 }
