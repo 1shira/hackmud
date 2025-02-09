@@ -278,7 +278,87 @@ function (context, args) {
                 return table(rows,[{key:"loc",header:headers ? "loc" : null},{key:"diff",header:headers ? "diff" : null},{key:"type",header:headers ? "class" : null}])
             // will only split if loc doesn#t fit on screen, but may cause linewrap resulting in wierd looking lists
             return (headers ? (center("loc",44) + "diff class") : "") + rows.map(el => ljust(el.loc,45) + " " + el.diff + " " + el.type).join("\n")
+        },
+    upgrade_parser = (ups, json = false) => {
+      // takes an array of upgrades and returns either a string or an array with the upgrades stripped to their important stats
+      const important_stats = {
+        CON_SPEC: ['p1_len', 'p2_len'],
+        acct_nt: ['acct_nt_min'],
+        sn_w_glock: ['max_glock_amnt', 'expire_secs'],
+        sn_w_usac: ['salt_digits'],
+        magnara: ['magnara_len'],
+        shfflr: [
+          'up_count_min',
+          'up_count_max',
+          'name_count',
+          'rarity_count',
+          'digits',
+        ],
+        l0g_wr1t3r: ['loc_count'],
+        char_count: ['chars'],
+        public_script: ['slots'],
+        script_slot: ['slots'],
+        channel_count: ['count'],
+        balance: ['cooldown'],
+        expose_access_log: ['cooldown', 'count'],
+        expose_upgrade_log: ['cooldown', 'count'],
+        expose_upgrades: ['cooldown'],
+        log_writer: ['cooldown'],
+        transactions: ['cooldown', 'count'],
+        transfer_upgrade: ['cooldown', 'count'],
+        transfer: ['cooldown', 'amount'],
+        w4rn_message: ['cooldown'],
+        DATA_CHECK: ['acc_mod'],
+        l0cket: ['count'],
+        l0ckbox: ['count'],
+        l0ckjaw: ['count', 'expire_secs'],
+        cron_bot: ['cooldown', 'cost', 'retries', 'fails'],
+        k3y: ['k3y'],
+      };
+      const ups_stats_filtered = ups.map((el) => {
+        const up = {
+          name: el.name,
+          rarity: el.rarity,
+          i: el.i,
+          loaded: el.loaded,
+        };
+        const name = /_(V|v)[0-4]$/.test(up.name)
+          ? up.name.substring(0, up.name.length - 3)
+          : up.name;
+        if (Object.keys(important_stats).includes(name))
+          for (let stat of important_stats[name]) {
+            up[stat] = el[stat];
+          }
+
+        return up;
+      });
+      if (json) return ups_stats_filtered;
+      const longest = ups_stats_filtered.reduce(
+        (acc, el) => Math.max(acc, el.name.length),
+        0
+      );
+      return ups_stats_filtered.map((el) => {
+        let str = `\`${el.loaded ? 'V' : 0}${rjust(String(el.i), 3, '0')}\` \`${el.rarity}${ljust(el.name, longest)}\``;
+        for (let k of Object.keys(el)) {
+          if (['loaded', 'i', 'rarity', 'name'].includes(k)) continue;
+          str += ` | \`N${k}\`:\`V${el[k]}\``;
         }
-  if(!context.calling_script) return "`Ythis is a ui library used by shira products`\nsee\nhttps://github.com/1shira/hackmud/blob/main/shira.uilib.js"
-    return {rjust,ljust,center,side_by_side,len_wo_colors,count,table,analyze_npc,locTable,tableLineSplit}
+        return str;
+      });
+    };
+  if (!context.calling_script)
+    return '`Ythis is a ui library used by shira products`\nsee\nhttps://github.com/1shira/hackmud/blob/main/shira.uilib.js';
+  return {
+    rjust,
+    ljust,
+    center,
+    side_by_side,
+    len_wo_colors,
+    count,
+    table,
+    analyze_npc,
+    locTable,
+    tableLineSplit,
+    upgrade_parser,
+  };
 }
