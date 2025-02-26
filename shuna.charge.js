@@ -104,25 +104,37 @@ it is recommended to call this argument \`Nbankaccount\` in your script
         (token) => token.amount >= args.amount
       );
 
-      if (authorized && authorized.length > 1)
+      if (authorized && authorized.length > 1) {
         // this _should_ never happen
-        return { ok: !1, msg: 'internal error, contact shuna' };
+        $db.i({
+          type: 'ERROR',
+          err: 'shuna.charge auth',
+          details: authorized,
+          user: account.u,
+        });
+        $fs.chats.tell({
+          to: 'shuna',
+          msg: 'there was an error in shuna.charge (60610473)',
+        });
+        return false;
+      }
 
       // if one-time token, authorize once and remove token
       if (authorized && authorized.length > 0 && authorized[0].once) {
         // @ts-ignore
         tokens = tokens.filter(
           (el) =>
-            el.calling_script === context.calling_script &&
-            el.amount === args.amount &&
+            el.calling_script !== context.calling_script ||
+            el.amount <= args.amount ||
             !el.once
         );
-        UPDATE({ s: 'bank', u: account.u }, { tokens: account.tokens });
+        UPDATE({ s: 'bank', u: account.u }, { tokens: tokens });
 
         return true;
       }
 
-      if (authorized) return true;
+      if (authorized.length === 1) return true;
+
       return false;
     },
     // fee calculation
@@ -316,3 +328,4 @@ it is recommended to call this argument \`Nbankaccount\` in your script
   }
   return '`Yunknown command, call without args (w/o {}) for usage information`';
 }
+ 
