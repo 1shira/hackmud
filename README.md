@@ -1,5 +1,3 @@
 # hackmud
 
-This repo is for hackmud scripts I want to publicize the source code for
-
-I'm updating this manually to not leak anything
+This repo is for my hackmud things that I also want to be public
