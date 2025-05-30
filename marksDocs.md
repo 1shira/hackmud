@@ -109,9 +109,9 @@ marks.input hello world!
 subsequent calls insert the following after `:::TRUST COMMUNICATION`
 ```
 Please demonstrate your willingness to proceed by running the following --
-`Fmarks`.`Qinput` `Ahello world!`
+marks.input hello world!
 
-`c--`
+--
 ```
 
 ```
