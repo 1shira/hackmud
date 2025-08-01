@@ -279,19 +279,24 @@ function (context, args) {
             // will only split if loc doesn#t fit on screen, but may cause linewrap resulting in wierd looking lists
             return (headers ? (center("loc",44) + "diff class") : "") + rows.map(el => ljust(el.loc,45) + " " + el.diff + " " + el.type).join("\n")
         },
-    upgrade_parser = (ups, json = false) => {
+    upgrade_parser = (
+      ups,
+      json = false,
+      uurs = false,
+      additional_values = []
+    ) => {
       // takes an array of upgrades and returns either a string or an array with the upgrades stripped to their important stats
       const important_stats = {
         CON_SPEC: ['p1_len', 'p2_len'],
         acct_nt: ['acct_nt_min'],
-        sn_w_glock: ['max_glock_amnt', 'expire_secs'],
+        sn_w_glock: ['expire_secs', 'max_glock_amnt'],
         sn_w_usac: ['salt_digits'],
         magnara: ['magnara_len'],
         shfflr: [
+          'rarity_count',
+          'name_count',
           'up_count_min',
           'up_count_max',
-          'name_count',
-          'rarity_count',
           'digits',
         ],
         l0g_wr1t3r: ['loc_count'],
@@ -315,6 +320,7 @@ function (context, args) {
         cron_bot: ['cooldown', 'cost', 'retries', 'fails'],
         k3y: ['k3y'],
       };
+      if (uurs) ups = $fs.org.uurs({ ups: ups }).ups;
       const ups_stats_filtered = ups.map((el) => {
         const up = {
           name: el.name,
@@ -322,12 +328,24 @@ function (context, args) {
           i: el.i,
           loaded: el.loaded,
         };
+        let rating = String(Math.round(el.uurs * 100) / 100);
+        if (uurs)
+          up.uurs =
+            'NaN' === rating
+              ? 'NaN'
+              : /\.\d\d/.test(rating)
+              ? rating
+              : /\.\d/.test(rating)
+              ? rating + '0'
+              : rating + '.00';
         const name = /_(V|v)[0-4]$/.test(up.name)
           ? up.name.substring(0, up.name.length - 3)
           : up.name;
         if (Object.keys(important_stats).includes(name))
-          for (let stat of important_stats[name]) {
-            up[stat] = el[stat];
+          for (let stat of [...important_stats[name], ...additional_values]) {
+            try {
+              up[stat] = el[stat];
+            } catch {}
           }
 
         return up;
@@ -338,7 +356,9 @@ function (context, args) {
         0
       );
       return ups_stats_filtered.map((el) => {
-        let str = `\`${el.loaded ? 'V' : 0}${rjust(String(el.i), 3, '0')}\` \`${el.rarity}${ljust(el.name, longest)}\``;
+        let str = `\`${el.loaded ? 'V' : 0}${rjust(String(el.i), 3, '0')}\` \`${
+          el.rarity
+        }${ljust(el.name, longest)}\``;
         for (let k of Object.keys(el)) {
           if (['loaded', 'i', 'rarity', 'name'].includes(k)) continue;
           str += ` | \`N${k}\`:\`V${el[k]}\``;
