@@ -75,124 +75,120 @@ function (context, args) {
       res.push(tmp)
       return res
     },
-    tableLineSplit = (lines, width) => {
+    tableLineSplit = (lines, width) => { // this code is so cursed wth was I on
       // let lines = row[col].split("\n")
-      let lines_output = []
-      const goodSplitChars = /[ \.,\+_-]/g
-      const validColorCodes = /^[a-zA-Z0-9]$/
+      let lines_output = [];
+      const goodSplitChars = /[ \.,\+_-]/g;
+      const validColorCodes = /^[a-zA-Z0-9]$/;
       for (let k = 0; k < lines.length; k++) {
         // for these splits
         if (len_wo_colors(lines[k]) > width) {
           // if the line is longer than it should be
-          let line_in_output = ""
-          let in_color_code = false
-          let after_color_code = false
-          let remaining_input = lines[k]
-          let ll = 0
+          let line_in_output = '';
+          let in_color_code = false;
+          let after_color_code = false;
+          let remaining_input = lines[k];
+          let ll = 0;
 
-          for (
-            let l = 0;
-            l < lines[k].length && remaining_input.length > 0;
-            l++
-          ) {
-            let char = lines[k][l]
-            let next_sign = remaining_input.substring(1).search(goodSplitChars)
-            let netx_opportunity =
-              next_sign === -1 ? remaining_input.length : next_sign + 2
+          for (let l = 0; l < lines[k].length && remaining_input.length > 0; l++) {
+            let char = lines[k][l];
+            let next_sign = remaining_input.substring(1).search(goodSplitChars);
+            let netx_opportunity = next_sign === -1 ? remaining_input.length : next_sign + 2;
             if (
               // if this is a color code char and there is more coming, or we already are in a color code
-              char === "`" &&
-              (count(remaining_input, "`") > 1 || in_color_code)
+              char === '`' &&
+              (count(remaining_input, '`') > 1 || in_color_code)
             ) {
-              in_color_code = !in_color_code
+              in_color_code = !in_color_code;
               // true if we entered a color code, false if we exited
-              after_color_code = in_color_code
-              line_in_output += char
-              remaining_input = remaining_input.substring(1)
+              after_color_code = in_color_code;
+              line_in_output += char;
+              remaining_input = remaining_input.substring(1);
             } else if (after_color_code) {
               // if we _just_ entered a color code, ergo if the last char was one
               // if this char is not a color quanitfier, we aren't in a color code at all
               if (!validColorCodes.test(char)) {
-                in_color_code = false
+                in_color_code = false;
                 // this char and the invalid color code char
-                ll += 2
+                ll += 2;
               }
-              after_color_code = false
-              line_in_output += char
-              remaining_input = remaining_input.substring(1)
+              after_color_code = false;
+              line_in_output += char;
+              remaining_input = remaining_input.substring(1);
             } else if (
               // if we have a split oppertunity, and the next one is too far away
               goodSplitChars.test(char) &&
               ll + netx_opportunity > width
             ) {
               // add this char
-              line_in_output += char
+              line_in_output += char;
               // end color code if nessecary
-              if (in_color_code) line_in_output += "`"
-              // if color coode would end with next char, skip one more char for next line
-              if (in_color_code && remaining_input[1] === "`") {
+              if (in_color_code) line_in_output += '`';
+              // if color code would end with next char, skip one more char for next line
+              if (in_color_code && remaining_input[1] === '`') {
                 // color code ended with this line
-                in_color_code = false
-                remaining_input = remaining_input.substring(1)
+                in_color_code = false;
+                remaining_input = remaining_input.substring(1);
+                l++;
               }
               // remove added char
-              remaining_input = remaining_input.substring(1)
-              lines_output.push(line_in_output)
-              ll = 0
+              remaining_input = remaining_input.substring(1);
+              lines_output.push(line_in_output);
+              ll = 0;
 
               // if we were still in a color code, take the same code for the next line
               if (in_color_code) {
                 line_in_output =
-                  "`" +
+                  '`' +
                   line_in_output[
-                    line_in_output
-                      .substring(0, line_in_output.length - 1)
-                      .lastIndexOf("`") + 1
-                  ]
-              } else line_in_output = ""
+                    line_in_output.substring(0, line_in_output.length - 1).lastIndexOf('`') + 1
+                  ];
+              } else line_in_output = '';
             } else if (len_wo_colors(remaining_input) + ll <= width) {
               // the remaining input is shorter than what we cap to, so just add it
-              line_in_output += remaining_input
-              lines_output.push(line_in_output)
-              remaining_input = ""
-              line_in_output = ""
-              ll = 0
+              line_in_output += remaining_input;
+              lines_output.push(line_in_output);
+              remaining_input = '';
+              line_in_output = '';
+              ll = 0;
             } else if (ll >= width - 1) {
               // if we have reached max width
-              line_in_output += char
-              if (in_color_code) line_in_output += "`"
-              remaining_input = remaining_input.substring(1)
+              line_in_output += char;
+              if (in_color_code) {
+                line_in_output += '`';
+                // if next char would've ended the color code, we need to remove one more char (that char)
+                if (remaining_input[1] === '`') {
+                  remaining_input = remaining_input.substring(1);
+                  l++;
+                  // and also since that would've ended the color code we aren't in a color code anymore
+                  in_color_code = false;
+                }
+              }
+
+              remaining_input = remaining_input.substring(1);
               // split to next line
-              lines_output.push(line_in_output)
+              lines_output.push(line_in_output);
               line_in_output = in_color_code
                 ? // if we were still in a color code we take it with us to the next line
-                  "`" +
+                  '`' +
                   line_in_output[
-                    line_in_output
-                      .substring(0, line_in_output.length - 1)
-                      .lastIndexOf("`") + 1
+                    line_in_output.substring(0, line_in_output.length - 1).lastIndexOf('`') + 1
                   ]
-                : ""
-              ll = 0
+                : '';
+              ll = 0;
             } else {
               // nothing special, just add the char
-              ll++
-              line_in_output += char
-              remaining_input = remaining_input.substring(1)
+              ll++;
+              line_in_output += char;
+              remaining_input = remaining_input.substring(1);
             }
           }
         } else {
           // if the line first into the table
-          lines_output.push(lines[k])
+          lines_output.push(lines[k]);
         }
       }
-      return lines_output
-    },
-    allToString = arr => {
-      for (let i of Object.keys(arr)) {
-        if (typeof arr[i] == "object") allToString(arr[i])
-        else arr[i] = String(arr[i])
-      }
+      return lines_output;
     },
     table = (
       rows,
