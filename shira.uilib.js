@@ -190,6 +190,12 @@ function (context, args) {
       }
       return lines_output;
     },
+    allToString = arr => {
+      for (let i of Object.keys(arr)) {
+        if (typeof arr[i] == "object") allToString(arr[i])
+        else arr[i] = String(arr[i])
+      }
+    },
     table = (
       rows,
       columns = Object.keys(rows[0]).map(el => {
